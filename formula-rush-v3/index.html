@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#05070b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Formula Rush 3D — V3</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+  <div id="vignette"></div>
+  <div id="speedLines"></div>
+  <button id="soundBtn" aria-label="Audio disattivato">🔇</button>
+
+  <div id="hud" class="hidden">
+    <div class="hudTop">
+      <div class="chip"><span>POS</span><b id="pos">22/22</b></div>
+      <div class="chip center"><strong id="session">Q1</strong><small id="trackName">MONZA</small></div>
+      <div class="chip right"><span id="lapLabel">GIRO</span><b id="lap">1/1</b></div>
+    </div>
+    <div class="hudBottom">
+      <div class="telemetry">
+        <div><span>KM/H</span><b id="speed">0</b></div>
+        <div><span>ERS</span><b id="ersPct">100%</b></div>
+        <div class="bar"><i id="ersFill"></i></div>
+      </div>
+      <div id="raceMessage">TIENI PREMUTO ACCELERA</div>
+    </div>
+  </div>
+
+  <div id="controls" class="hidden">
+    <button class="control steering" data-key="left">◀</button>
+    <button class="control throttle" data-key="throttle"><span>ACCELERA</span><small>TIENI PREMUTO</small></button>
+    <button class="control steering" data-key="right">▶</button>
+    <button class="control brake" data-key="brake">FRENO</button>
+    <button class="control ers" data-key="ers"><span>ERS</span><small>BOOST</small></button>
+  </div>
+
+  <div id="countdown"></div>
+
+  <div id="overlay" class="show">
+    <section class="screen active" id="homeScreen">
+      <div class="kicker">MOBILE WEBGL RACER</div>
+      <h1>FORMULA<br><em>RUSH 3D V3</em></h1>
+      <p>Versione rifatta: acceleratore manuale, audio spento di default, niente alberi o rampe in pista, velocità credibili e guida più controllabile.</p>
+      <label for="teamSelect">SCUDERIA</label>
+      <select id="teamSelect"></select>
+      <div class="cards">
+        <article><b>MONZA</b><span>Alta velocità</span></article>
+        <article><b>SILVERSTONE</b><span>Curve veloci</span></article>
+        <article><b>SUZUKA</b><span>Tecnica</span></article>
+      </div>
+      <button id="startBtn" class="primary">INIZIA IL CAMPIONATO</button>
+      <button id="fullscreenBtn" class="secondary">SCHERMO INTERO</button>
+      <p class="legal">Modelli 3D originali ispirati alle moderne monoposto; nessun asset ufficiale o logo proprietario.</p>
+    </section>
+
+    <section class="screen" id="briefingScreen">
+      <div class="kicker" id="briefingKicker">SESSIONE</div>
+      <h2 id="briefingTitle">Q1 • MONZA</h2>
+      <p id="briefingText"></p>
+      <div id="objectives" class="objectives"></div>
+      <button id="driveBtn" class="primary">SCENDI IN PISTA</button>
+    </section>
+
+    <section class="screen" id="resultScreen">
+      <div class="kicker" id="resultKicker">RISULTATO</div>
+      <h2 id="resultTitle">P1</h2>
+      <p id="resultText"></p>
+      <div id="resultsTable" class="results"></div>
+      <button id="continueBtn" class="primary">CONTINUA</button>
+    </section>
+
+    <section class="screen" id="finishScreen">
+      <div class="kicker">CAMPIONATO COMPLETATO</div>
+      <h2 id="championTitle">CAMPIONE</h2>
+      <p id="championText"></p>
+      <div id="championshipTable" class="results"></div>
+      <button id="restartBtn" class="primary">NUOVO CAMPIONATO</button>
+    </section>
+  </div>
+</div>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
