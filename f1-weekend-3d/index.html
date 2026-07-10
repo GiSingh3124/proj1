@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#090c12">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>F1 Weekend 3D</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hudTop">
+      <div class="panel left">
+        <div class="label">POS</div>
+        <div class="value" id="hudPos">P20</div>
+      </div>
+      <div class="panel center">
+        <div class="value title" id="hudTitle">F1 WEEKEND</div>
+        <div class="small" id="hudSubtitle">Monza • Qualifica</div>
+      </div>
+      <div class="panel right">
+        <div class="label">LAP / TIME</div>
+        <div class="value" id="hudLap">0 / 0</div>
+      </div>
+    </div>
+
+    <div id="hudBottom">
+      <div class="panel telemetry">
+        <div class="teleLine"><span>Velocità</span><b id="hudSpeed">0 km/h</b></div>
+        <div class="teleLine"><span>ERS</span><b id="hudErs">100%</b></div>
+        <div class="bar"><div id="ersFill"></div></div>
+        <div class="teleLine"><span>Gomme</span><b id="hudTyre">SOFT</b></div>
+      </div>
+      <div class="panel timing">
+        <div id="sessionInfo">Scegli una scuderia e inizia il weekend.</div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button class="ctrl steer" data-key="left">◀</button>
+      <button class="ctrl steer" data-key="right">▶</button>
+      <button class="ctrl action" data-key="brake">FRENO</button>
+      <button class="ctrl action ers" data-key="ers">ERS</button>
+    </div>
+
+    <div id="overlay" class="show">
+      <div class="card" id="menuCard">
+        <div class="eyebrow">Arcade championship • mobile only</div>
+        <h1>F1 WEEKEND 3D</h1>
+        <p>Mini campionato da tre GP con weekend completi: <b>Q1, Q2, Q3</b> e gara. Scuderie reali, stile 3D arcade, progettato per telefono.</p>
+        <label for="teamSelect">Scuderia</label>
+        <select id="teamSelect"></select>
+        <div class="grid2">
+          <div class="mini"><b>GP 1</b><span>Monza</span></div>
+          <div class="mini"><b>GP 2</b><span>Silverstone</span></div>
+          <div class="mini"><b>GP 3</b><span>Suzuka</span></div>
+          <div class="mini"><b>Format</b><span>Q1 → Q2 → Q3 → Gara</span></div>
+        </div>
+        <button id="startBtn" class="primary">INIZIA IL CAMPIONATO</button>
+        <button id="fullBtn" class="secondary">SCHERMO INTERO</button>
+      </div>
+
+      <div class="card hidden" id="resultCard">
+        <div class="eyebrow" id="resultEyebrow">Risultato sessione</div>
+        <h2 id="resultTitle">Q1 completata</h2>
+        <p id="resultBody"></p>
+        <div id="champTable"></div>
+        <button id="continueBtn" class="primary">CONTINUA</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
