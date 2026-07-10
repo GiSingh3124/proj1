@@ -7,9 +7,9 @@ async function loadGame() {
     startButton.textContent = 'CARICAMENTO MOTORE 3D…';
   }
 
-  const chunkNames = ['00', '01'];
+  const chunkNames = ['00', '01', '02', '03'];
   const chunks = await Promise.all(chunkNames.map(async (name) => {
-    const response = await fetch(`./chunks/${name}.b64?build=3`);
+    const response = await fetch(`./chunks/${name}.b64?build=4`);
     if (!response.ok) throw new Error(`Chunk ${name} non disponibile (${response.status})`);
     return response.text();
   }));
