@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#05070d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Formula Rush 3D</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game"></canvas>
+    <div id="vignette"></div>
+    <div id="speedLines"></div>
+    <div id="flash"></div>
+
+    <div id="hud" class="hidden">
+      <div class="hud-top">
+        <div class="chip"><span>POS</span><b id="pos">22/22</b></div>
+        <div class="chip center"><strong id="session">Q1</strong><small id="trackName">MONZA</small></div>
+        <div class="chip right"><span id="lapLabel">GIRO</span><b id="lap">1/1</b></div>
+      </div>
+
+      <div id="miniMap"><canvas id="mapCanvas"></canvas></div>
+
+      <div class="hud-bottom">
+        <div class="telemetry">
+          <div><span>KM/H</span><b id="speed">0</b></div>
+          <div><span>NITRO</span><b id="nitroPct">100%</b></div>
+          <div class="bar"><i id="nitroFill"></i></div>
+        </div>
+        <div id="raceMessage">SCALDA LE GOMME</div>
+      </div>
+    </div>
+
+    <div id="controls" class="hidden">
+      <button class="control steering" data-key="left" aria-label="Sterza a sinistra">◀</button>
+      <button class="control steering" data-key="right" aria-label="Sterza a destra">▶</button>
+      <button class="control brake" data-key="brake">FRENO</button>
+      <button class="control nitro" data-key="nitro"><span>NITRO</span><small>BOOST</small></button>
+    </div>
+
+    <div id="countdown"></div>
+
+    <div id="overlay" class="show">
+      <section class="screen active" id="homeScreen">
+        <div class="brand-kicker">MOBILE ARCADE RACER</div>
+        <h1>FORMULA<br><em>RUSH 3D</em></h1>
+        <p class="intro">Un mini campionato WebGL con qualifiche Q1–Q2–Q3 e tre Gran Premi. Guida arcade, nitro, salti, collisioni e 22 monoposto.</p>
+
+        <label class="field-label" for="teamSelect">SCUDERIA</label>
+        <select id="teamSelect"></select>
+
+        <div class="event-strip">
+          <article><b>01</b><span>MONZA</span><small>Alta velocità</small></article>
+          <article><b>02</b><span>SILVERSTONE</span><small>Curve veloci</small></article>
+          <article><b>03</b><span>SUZUKA</span><small>Tecnica</small></article>
+        </div>
+
+        <button id="startBtn" class="primary">INIZIA IL CAMPIONATO</button>
+        <button id="fullscreenBtn" class="secondary">SCHERMO INTERO</button>
+        <p class="legal">Scuderie rappresentate tramite nomi e colori, senza loghi ufficiali.</p>
+      </section>
+
+      <section class="screen" id="briefingScreen">
+        <div class="brand-kicker" id="briefingKicker">SESSIONE</div>
+        <h2 id="briefingTitle">Q1 • MONZA</h2>
+        <p id="briefingText"></p>
+        <div class="objectives" id="objectives"></div>
+        <button id="driveBtn" class="primary">SCENDI IN PISTA</button>
+      </section>
+
+      <section class="screen" id="resultScreen">
+        <div class="brand-kicker" id="resultKicker">RISULTATO</div>
+        <h2 id="resultTitle">P1</h2>
+        <p id="resultText"></p>
+        <div id="resultsTable" class="results"></div>
+        <button id="continueBtn" class="primary">CONTINUA</button>
+      </section>
+
+      <section class="screen" id="finishScreen">
+        <div class="brand-kicker">CAMPIONATO COMPLETATO</div>
+        <h2 id="championTitle">CAMPIONE</h2>
+        <p id="championText"></p>
+        <div id="championshipTable" class="results"></div>
+        <button id="restartBtn" class="primary">NUOVO CAMPIONATO</button>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
