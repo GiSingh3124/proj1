@@ -8,7 +8,7 @@ const hud = $('hud');
 const controls = $('controls');
 const countdown = $('countdown');
 const speedLines = $('speedLines');
-const flash = $('flash');
+const soundBtn = $('soundBtn');
 
 const screens = {
   home: $('homeScreen'),
@@ -19,15 +19,14 @@ const screens = {
 
 const ui = {
   pos: $('pos'), session: $('session'), trackName: $('trackName'), lapLabel: $('lapLabel'), lap: $('lap'),
-  speed: $('speed'), nitroPct: $('nitroPct'), nitroFill: $('nitroFill'), raceMessage: $('raceMessage'),
+  speed: $('speed'), ersPct: $('ersPct'), ersFill: $('ersFill'), raceMessage: $('raceMessage'),
   teamSelect: $('teamSelect'), briefingKicker: $('briefingKicker'), briefingTitle: $('briefingTitle'),
   briefingText: $('briefingText'), objectives: $('objectives'), resultKicker: $('resultKicker'),
   resultTitle: $('resultTitle'), resultText: $('resultText'), resultsTable: $('resultsTable'),
   championTitle: $('championTitle'), championText: $('championText'), championshipTable: $('championshipTable'),
-  mapCanvas: $('mapCanvas')
 };
 
-TEAMS.forEach(team => {
+TEAMS.forEach((team) => {
   const option = document.createElement('option');
   option.value = team.id;
   option.textContent = team.name;
@@ -36,10 +35,10 @@ TEAMS.forEach(team => {
 ui.teamSelect.value = 'ferrari';
 
 let pendingNext = null;
-let mapPoints = [];
+let audioEnabled = false;
 
 function showScreen(name) {
-  Object.entries(screens).forEach(([key, el]) => el.classList.toggle('active', key === name));
+  Object.entries(screens).forEach(([key, element]) => element.classList.toggle('active', key === name));
   overlay.classList.add('show');
 }
 
@@ -47,36 +46,32 @@ function hideOverlay() {
   overlay.classList.remove('show');
 }
 
-function makeResultRows(results, playerId, mode = 'time') {
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 1000);
+  return `${mins}:${String(secs).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+}
+
+function makeRows(results, playerId, mode = 'time') {
   return results.slice(0, 22).map((entry, index) => {
     const driver = entry.driver;
     const isPlayer = driver.id === playerId;
-    let value = '';
-    if (mode === 'time') {
-      const secs = entry.time;
-      const min = Math.floor(secs / 60);
-      const sec = Math.floor(secs % 60);
-      const ms = Math.floor((secs % 1) * 1000);
-      value = `${min}:${String(sec).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
-    } else if (mode === 'points') {
-      value = `${entry.points} PT`;
-    } else {
-      value = index === 0 ? 'VINCITORE' : `+${Math.max(0, entry.time - results[0].time).toFixed(2)}s`;
-    }
-    return `<div class="result-row ${isPlayer ? 'you' : ''}"><b>P${index + 1}</b><div><span>${driver.name}</span><div class="team">${driver.team.name}</div></div><strong>${value}</strong></div>`;
+    const value = mode === 'points' ? `${entry.points} PT`
+      : mode === 'gap' ? (index === 0 ? 'VINCITORE' : `+${Math.max(0, entry.time - results[0].time).toFixed(2)}s`)
+        : formatTime(entry.time);
+    return `<div class="resultRow ${isPlayer ? 'you' : ''}"><b>P${index + 1}</b><div><span>${driver.name}</span><small>${driver.team.name}</small></div><strong>${value}</strong></div>`;
   }).join('');
 }
 
-function showBriefing(data) {
+function drawBriefing(data) {
   ui.briefingKicker.textContent = data.kicker;
   ui.briefingTitle.textContent = data.title;
   ui.briefingText.textContent = data.text;
-  ui.objectives.innerHTML = data.objectives.map((item, i) => `<div class="objective"><i>${i + 1}</i><span>${item}</span></div>`).join('');
+  ui.objectives.innerHTML = data.objectives.map((item, index) => `<div class="objective"><i>${index + 1}</i><span>${item}</span></div>`).join('');
   showScreen('briefing');
   hud.classList.add('hidden');
   controls.classList.add('hidden');
-  mapPoints = game.getMiniMapData();
-  drawMiniMap(0);
 }
 
 function showSessionResult(result) {
@@ -89,37 +84,30 @@ function showSessionResult(result) {
     ui.resultKicker.textContent = `${result.session} • QUALIFICA`;
     ui.resultTitle.textContent = `P${result.position}`;
     const outcome = result.session === 'Q3'
-      ? (result.position === 1 ? 'Pole position. Hai messo tutti in fila.' : 'Griglia definita. Adesso conta la gara.')
-      : (result.advanced ? `Passi alla sessione successiva.` : `Eliminato in ${result.session}. Partirai dalla P${result.position}.`);
+      ? (result.position === 1 ? 'Pole position.' : 'Griglia definita.')
+      : (result.advanced ? 'Passi alla sessione successiva.' : `Eliminato in ${result.session}.`);
     ui.resultText.innerHTML = `Tempo: <b>${formatTime(result.time)}</b><br>${outcome}`;
-    ui.resultsTable.innerHTML = makeResultRows(result.results, game.player.driver.id, 'time');
+    ui.resultsTable.innerHTML = makeRows(result.results, game.player.driver.id, 'time');
   } else {
     ui.resultKicker.textContent = `${game.track.name.toUpperCase()} • GARA`;
     ui.resultTitle.textContent = `P${result.position}`;
-    ui.resultText.innerHTML = `Tempo gara: <b>${formatTime(result.time)}</b><br>Knockdown: <b>${result.knockdowns}</b>. ${result.position <= 3 ? 'Podio conquistato.' : 'Punti preziosi, ma il muretto ne vuole altri.'}`;
-    ui.resultsTable.innerHTML = makeResultRows(result.standings, game.player.driver.id, 'gap');
+    ui.resultText.innerHTML = `Tempo gara: <b>${formatTime(result.time)}</b><br>${result.position <= 3 ? 'Podio conquistato.' : 'Weekend completato.'}`;
+    ui.resultsTable.innerHTML = makeRows(result.standings, game.player.driver.id, 'gap');
   }
   showScreen('result');
 }
 
 function showChampionship(entries) {
-  const playerEntry = entries.find(e => e.driver.id === game.player.driver.id);
+  const playerEntry = entries.find((entry) => entry.driver.id === game.player.driver.id);
   const position = entries.indexOf(playerEntry) + 1;
   ui.championTitle.textContent = position === 1 ? 'CAMPIONE!' : `P${position} FINALE`;
   ui.championText.textContent = position === 1
-    ? 'Hai vinto il mini campionato. Il telefono è ancora intero: doppio successo.'
-    : `Campionato concluso con ${playerEntry.points} punti. C’è margine per una rivincita.`;
-  ui.championshipTable.innerHTML = makeResultRows(entries, game.player.driver.id, 'points');
+    ? 'Hai vinto il mini campionato.'
+    : `Campionato concluso con ${playerEntry.points} punti.`;
+  ui.championshipTable.innerHTML = makeRows(entries, game.player.driver.id, 'points');
   hud.classList.add('hidden');
   controls.classList.add('hidden');
   showScreen('finish');
-}
-
-function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  const ms = Math.floor((seconds % 1) * 1000);
-  return `${mins}:${String(secs).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
 }
 
 function updateHUD(data) {
@@ -129,82 +117,47 @@ function updateHUD(data) {
   ui.lapLabel.textContent = data.session === 'RACE' ? 'GIRO' : 'SESSIONE';
   ui.lap.textContent = `${data.lap}/${data.laps}`;
   ui.speed.textContent = data.speed;
-  ui.nitroPct.textContent = `${data.nitro}%`;
-  ui.nitroFill.style.width = `${data.nitro}%`;
+  ui.ersPct.textContent = `${data.ers}%`;
+  ui.ersFill.style.width = `${data.ers}%`;
   ui.raceMessage.textContent = data.message;
-  speedLines.style.opacity = data.nitroActive ? '.62' : data.speed > 285 ? '.18' : '0';
-  drawMiniMap(data.progress);
-}
-
-function drawMiniMap(progress) {
-  if (!mapPoints.length) return;
-  const c = ui.mapCanvas;
-  const rect = c.getBoundingClientRect();
-  const dpr = Math.min(2, devicePixelRatio || 1);
-  c.width = Math.max(1, Math.floor(rect.width * dpr));
-  c.height = Math.max(1, Math.floor(rect.height * dpr));
-  const ctx = c.getContext('2d');
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,rect.width,rect.height);
-
-  const xs = mapPoints.map(p => p.x);
-  const zs = mapPoints.map(p => p.z);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minZ = Math.min(...zs), maxZ = Math.max(...zs);
-  const pad = 12;
-  const scale = Math.min((rect.width-pad*2)/(maxX-minX || 1),(rect.height-pad*2)/(maxZ-minZ || 1));
-  const map = p => ({x:pad+(p.x-minX)*scale,y:rect.height-pad-(p.z-minZ)*scale});
-
-  ctx.strokeStyle = 'rgba(255,255,255,.35)';
-  ctx.lineWidth = 4;
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  mapPoints.forEach((p,i)=>{const m=map(p); i?ctx.lineTo(m.x,m.y):ctx.moveTo(m.x,m.y);});
-  ctx.closePath();
-  ctx.stroke();
-
-  const p = mapPoints[Math.floor(progress * mapPoints.length) % mapPoints.length];
-  const m = map(p);
-  ctx.fillStyle = '#ff344d';
-  ctx.beginPath();ctx.arc(m.x,m.y,4.5,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle = 'white';ctx.lineWidth=1.5;ctx.stroke();
-}
-
-function impactFlash() {
-  flash.animate([{opacity:.65},{opacity:0}],{duration:260,easing:'ease-out'});
+  speedLines.style.opacity = data.boostActive ? '.5' : data.speed > 290 ? '.12' : '0';
 }
 
 const game = new FormulaRushGame(canvas, {
-  onBriefing: showBriefing,
+  onBriefing: drawBriefing,
   onDriveStart: () => {
     hideOverlay();
     hud.classList.remove('hidden');
     controls.classList.remove('hidden');
   },
-  onCountdown: value => {
+  onCountdown: (value) => {
     if (value > 0) {
       countdown.textContent = Math.ceil(value);
-      countdown.style.color = '#ff344d';
-    } else if (value > -.55) {
-      countdown.textContent = 'GO!';
-      countdown.style.color = '#68f5ff';
+      countdown.style.color = '#ff4058';
+      coountdown.style.opacity = '1';
+    } else if (value > -0.45) {
+      countdown.textContent = 'VIA';
+      countdown.style.color = '#64f1ff';
+      countdown.style.opacity = String(Math.max(0, 1 + value * 2));
     } else {
       countdown.textContent = '';
     }
   },
   onHUD: updateHUD,
-  onImpact: impactFlash,
+  onImpact: () => {
+    canvas.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(-6px,3px)' }, { transform: 'translate(5px,-2px)' }, { transform: 'translate(0,0)' }], { duration: 180 });
+  },
   onSessionResult: showSessionResult,
   onChampionshipEnd: showChampionship,
 });
 
 game.selectTeam(ui.teamSelect.value);
-ui.teamSelect.addEventListener('change', e => game.selectTeam(e.target.value));
 
+ui.teamSelect.addEventListener('change', (event) => game.selectTeam(event.target.value));
 $('startBtn').addEventListener('click', () => {
   game.selectTeam(ui.teamSelect.value);
   game.beginChampionship();
 });
-
 $('driveBtn').addEventListener('click', () => game.startDriving());
 $('continueBtn').addEventListener('click', () => {
   if (pendingNext) {
@@ -219,33 +172,34 @@ $('restartBtn').addEventListener('click', () => {
 });
 $('fullscreenBtn').addEventListener('click', async () => {
   try {
-    const el = document.documentElement;
-    await (el.requestFullscreen?.() || el.webkitRequestFullscreen?.());
-    await screen.orientation?.lock?.('portrait');
+    const element = document.documentElement;
+    await (element.requestFullscreen?.() || element.webkitRequestFullscreen?.());
   } catch (_) {}
 });
 
+soundBtn.addEventListener('click', async () => {
+  audioEnabled = !audioEnabled;
+  await game.setAudioEnabled(audioEnabled);
+  soundBtn.textContent = audioEnabled ? '🔊' : '🔇';
+  soundBtn.setAttribute('aria-label', audioEnabled ? 'Disattiva audio' : 'Attiva audio');
+});
+
 function bindControl(element, key) {
-  const down = e => {
-    e.preventDefault();
+  const down = (event) => {
+    event.preventDefault();
     element.classList.add('active');
     game.setInput(key, true);
-    game.audio.start();
   };
-  const up = e => {
-    e.preventDefault();
+  const up = (event) => {
+    event.preventDefault();
     element.classList.remove('active');
     game.setInput(key, false);
   };
-  element.addEventListener('pointerdown', down, {passive:false});
-  ['pointerup','pointercancel','pointerleave'].forEach(type => element.addEventListener(type, up, {passive:false}));
+  element.addEventListener('pointerdown', down, { passive: false });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => element.addEventListener(type, up, { passive: false }));
 }
 
-document.querySelectorAll('[data-key]').forEach(el => bindControl(el, el.dataset.key));
-document.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
-window.addEventListener('resize', () => {
-  game.resize();
-  drawMiniMap(game.player?.progress || 0);
-}, {passive:true});
-
+document.querySelectorAll('[data-key]').forEach((element) => bindControl(element, element.dataset.key));
+document.addEventListener('touchmove', (event) => event.preventDefault(), { passive: false });
+window.addEventListener('resize', () => game.resize(), { passive: true });
 showScreen('home');
