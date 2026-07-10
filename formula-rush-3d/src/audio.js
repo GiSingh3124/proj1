@@ -5,9 +5,28 @@ export class AudioEngine {
     this.engineGain = null;
     this.filter = null;
     this.enabled = false;
+    this.userEnabled = false;
+  }
+
+  async setEnabled(value) {
+    this.userEnabled = Boolean(value);
+    if (!this.userEnabled) {
+      this.enabled = false;
+      if (this.engineGain && this.ctx) {
+        this.engineGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.04);
+      }
+      return false;
+    }
+    await this.start();
+    return this.enabled;
+  }
+
+  async toggle() {
+    return this.setEnabled(!this.userEnabled);
   }
 
   async start() {
+    if (!this.userEnabled) return;
     try {
       this.ctx ||= new (window.AudioContext || window.webkitAudioContext)();
       if (this.ctx.state === 'suspended') await this.ctx.resume();
@@ -18,11 +37,11 @@ export class AudioEngine {
         const subGain = this.ctx.createGain();
         this.filter = this.ctx.createBiquadFilter();
         this.engineOsc.type = 'sawtooth';
-        sub.type = 'square';
-        this.engineGain.gain.value = 0.018;
-        subGain.gain.value = 0.006;
+        sub.type = 'triangle';
+        this.engineGain.gain.value = 0.0001;
+        subGain.gain.value = 0.002;
         this.filter.type = 'lowpass';
-        this.filter.frequency.value = 900;
+        this.filter.frequency.value = 650;
         this.engineOsc.connect(this.engineGain).connect(this.filter).connect(this.ctx.destination);
         sub.connect(subGain).connect(this.filter);
         this.engineOsc.start();
@@ -35,14 +54,14 @@ export class AudioEngine {
     }
   }
 
-  update(speedRatio, nitro) {
+  update(speedRatio, nitro, throttle = 0) {
     if (!this.enabled || !this.ctx || !this.engineOsc) return;
     const now = this.ctx.currentTime;
-    const rpm = 70 + speedRatio * 250 + (nitro ? 45 : 0);
-    this.engineOsc.frequency.setTargetAtTime(rpm, now, 0.035);
-    this.subOsc.frequency.setTargetAtTime(rpm * 0.48, now, 0.04);
-    this.filter.frequency.setTargetAtTime(500 + speedRatio * 1600 + (nitro ? 500 : 0), now, 0.05);
-    this.engineGain.gain.setTargetAtTime(0.014 + speedRatio * 0.025, now, 0.06);
+    const rpm = 85 + speedRatio * 240 + throttle * 42 + (nitro ? 28 : 0);
+    this.engineOsc.frequency.setTargetAtTime(rpm, now, 0.055);
+    this.subOsc.frequency.setTargetAtTime(rpm * 0.45, now, 0.065);
+    this.filter.frequency.setTargetAtTime(420 + speedRatio * 1150 + throttle * 300, now, 0.08);
+    this.engineGain.gain.setTargetAtTime(0.004 + speedRatio * 0.009 + throttle * 0.004, now, 0.08);
   }
 
   impact(strength = 1) {
@@ -50,14 +69,14 @@ export class AudioEngine {
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(85, now);
-    osc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
-    gain.gain.setValueAtTime(0.06 * strength, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(72, now);
+    osc.frequency.exponentialRampToValueAtTime(38, now + 0.12);
+    gain.gain.setValueAtTime(0.025 * strength, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
     osc.connect(gain).connect(this.ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.21);
+    osc.stop(now + 0.15);
   }
 
   pickup() {
@@ -66,12 +85,12 @@ export class AudioEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(1180, now + 0.18);
-    gain.gain.setValueAtTime(0.04, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.frequency.setValueAtTime(540, now);
+    osc.frequency.exponentialRampToValueAtTime(900, now + 0.1);
+    gain.gain.setValueAtTime(0.018, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
     osc.connect(gain).connect(this.ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.21);
+    osc.stop(now + 0.13);
   }
 }
